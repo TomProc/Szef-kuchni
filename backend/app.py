@@ -22,30 +22,55 @@ import json
 
 @app.route('/get_recipes', methods=['GET'])
 def get_recipes():
+    sort_by = request.args.get('sort_by', 'id')  # Domyślne sortowanie po 'id'
+    order = request.args.get('order', 'asc')     # Domyślne rosnąco (asc)
     
-    sort_by = request.args.get('sort_by', 'id')  # Domyślnie sortowanie po 'id'
-    order = request.args.get('order', 'asc')     # Domyślnie rosnąco (asc)
-
+    # Pobieranie parametrów filtrowania
+    time_max = request.args.get('time_max', type=int)  # Maksymalny czas przygotowania
+    difficulty = request.args.get('difficulty', type=int)  # Poziom trudności (1: łatwe, 2: średnie, 3: trudne)
     
-    #['id', 'name', 'time', 'difficulty'] - Obsługiwane sortowanie sortowania
-
+    # Budowanie zapytania do bazy danych
+    query = Recipe.query
     
-
-   
-    if order == 'desc':                                  # Pobranie przepisów z bazy danych i sortowanie
-        recipes = Recipe.query.order_by(getattr(Recipe, sort_by).desc()).all()
+    if time_max:
+        query = query.filter(Recipe.time <= time_max)
+    if difficulty:
+        query = query.filter(Recipe.difficulty == difficulty)
+    
+    # Sortowanie wyników
+    if order == 'desc':
+        query = query.order_by(getattr(Recipe, sort_by).desc())
     else:
-        recipes = Recipe.query.order_by(getattr(Recipe, sort_by).asc()).all()
-
+        query = query.order_by(getattr(Recipe, sort_by).asc())
     
-    json_recipes = list(map(lambda x: x.to_json(), recipes))# Konwersja wyników do JSON-a
-
+    # Pobieranie przepisów z bazy danych
+    recipes = query.all()
+    json_recipes = list(map(lambda x: x.to_json(), recipes))  # Konwersja wyników do JSON-a
     
     response = app.response_class(
         response=json.dumps({'recipes': json_recipes}, ensure_ascii=False),
         mimetype='application/json; charset=utf-8'
     )
     return response
+
+# wyszukiwanie przepisów po składnikach
+@app.route('/search_recipes', methods=['GET'])
+def search_recipes():
+    # Pobranie listy składników z parametrów zapytania
+    ingredients = request.args.getlist('ingredients')
+    
+    if not ingredients:
+        return jsonify({'error': 'No ingredients provided'}), 400
+
+    # Wyszukiwanie przepisów, które zawierają wszystkie podane składniki
+    matching_recipes = Recipe.query.filter(
+        db.and_(*(Recipe.ingredients.like(f'%{ingredient}%') for ingredient in ingredients))
+    ).all()
+
+    # Konwersja wyników do formatu JSON
+    json_recipes = [recipe.to_json() for recipe in matching_recipes]
+
+    return jsonify({'recipes': json_recipes})
 
 
 
