@@ -28,6 +28,8 @@ def get_recipes():
     # Pobieranie parametrów filtrowania
     time_max = request.args.get('time_max', type=int)  # Maksymalny czas przygotowania
     difficulty = request.args.get('difficulty', type=int)  # Poziom trudności (1: łatwe, 2: średnie, 3: trudne)
+    favourite=request.args.get('favourite', type=bool)  #czy wyświetlać ulubione czy nie
+
     
     # Budowanie zapytania do bazy danych
     query = Recipe.query
@@ -36,6 +38,9 @@ def get_recipes():
         query = query.filter(Recipe.time <= time_max)
     if difficulty:
         query = query.filter(Recipe.difficulty == difficulty)
+
+    if favourite:
+        query = query.filter(Recipe.favourite == True)
     
     # Sortowanie wyników
     if order == 'desc':
@@ -52,6 +57,22 @@ def get_recipes():
         mimetype='application/json; charset=utf-8'
     )
     return response
+
+
+#dodawanie do ulubionych czyli edytowanie kolumny favourite
+
+@app.route('/add_to_favourites/<int:id_recipe>', methods=['PATCH'])
+def add_to_favourites(id_recipe):
+    recipe=Recipe.query.get(id_recipe)
+
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+
+    data=request.json
+    recipe.favourite=data.get('favourite', recipe.favourite)
+    db.session.commit()
+    return jsonify({'message': 'Recipe added to favourites successfully'})
+
 
 # wyszukiwanie przepisów po składnikach
 @app.route('/search_recipes', methods=['GET'])
@@ -79,3 +100,14 @@ if __name__ == '__main__':
         db.create_all()
 
     app.run(debug=True)
+
+
+
+
+
+
+
+
+
+
+
