@@ -5,13 +5,12 @@ from skimage.feature import hog
 from sklearn.model_selection import train_test_split
 from sklearn.svm import SVC
 from sklearn.metrics import accuracy_score, classification_report
-import matplotlib.pyplot as plt
+import time
 
 # Define image size
 img_rows, img_cols = 28, 28
 
 # Load and preprocess data
-
 def load_data(data_dir):
     data = []
     labels = []
@@ -50,8 +49,24 @@ clf.fit(X_train_features, y_train)
 # Evaluate the model
 y_pred = clf.predict(X_test_features)
 
+# Functions to switch screens
+def switch_screen(direction):
+    if direction == "backward":
+        print("Switching to the previous screen...")
+    elif direction == "forward":
+        print("Switching to the next screen...")
+
 # Real-time prediction
 cap = cv2.VideoCapture(0)
+
+# Variables to track gesture stability
+last_prediction = None
+start_time = None
+
+def reset_timer():
+    global last_prediction, start_time
+    last_prediction = None
+    start_time = None
 
 while True:
     ret, frame = cap.read()
@@ -72,14 +87,32 @@ while True:
     prob = clf.predict_proba(roi_features)[0]
 
     # Define thresholds for "No gesture recognized"
-    if prob.max() < 0.90:  # Confidence threshold (adjustable)
-        label = "No gesture recognized"
+    if prob.max() < 0.70:  # Confidence threshold (adjustable)
+        label = "no gesture recognized"
+        reset_timer()
     else:
-        if prediction==0:
+        if prediction == 0:
             label = "Cofnij"
-        elif prediction==1:
+        elif prediction == 1:
             label = "Nastepny"
+        else:
+            label = "no gesture recognized"
+            reset_timer()
 
+        # Check for stable gesture
+        if last_prediction == prediction:
+            if start_time is None:
+                start_time = time.time()
+            elif time.time() - start_time >= 1.0:  # Gesture stable for at least 1 second
+                if prediction == 0:
+                    switch_screen("backward")
+                elif prediction == 1:
+                    switch_screen("forward")
+                reset_timer()
+        else:
+            reset_timer()
+            last_prediction = prediction
+            start_time = time.time()
 
     # Display result
     copy = frame.copy()
@@ -92,5 +125,3 @@ while True:
 
 cap.release()
 cv2.destroyAllWindows()
-
-
