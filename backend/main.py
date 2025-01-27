@@ -23,40 +23,52 @@ import json
 @app.route('/get_recipes', methods=['GET'])
 def get_recipes():
     sort_by = request.args.get('sort_by', 'id')  # Domyślne sortowanie po 'id'
-    order = request.args.get('order', 'asc')     # Domyślne rosnąco (asc)
+    order = request.args.get('order', 'asc')     # Domyślne sortowanie rosnące
     
     # Pobieranie parametrów filtrowania
     time_max = request.args.get('time_max', type=int)  # Maksymalny czas przygotowania
-    difficulty = request.args.get('difficulty', type=int)  # Poziom trudności (1: łatwe, 2: średnie, 3: trudne)
-    favourite=request.args.get('favourite', type=bool)  #czy wyświetlać ulubione czy nie
+    difficulty = request.args.get('difficulty', type=int)  # Poziom trudności
+    favourite = request.args.get('favourite', type=bool)  # Tylko ulubione
+    ingredients = request.args.getlist('ingredients')  # Lista składników do wyszukiwania
 
-    
     # Budowanie zapytania do bazy danych
     query = Recipe.query
-    
+
+    # Filtrowanie po maksymalnym czasie przygotowania
     if time_max:
         query = query.filter(Recipe.time <= time_max)
+
+    # Filtrowanie po poziomie trudności
     if difficulty:
         query = query.filter(Recipe.difficulty == difficulty)
 
+    # Filtrowanie po ulubionych
     if favourite:
         query = query.filter(Recipe.favourite == True)
-    
+
+    # Filtrowanie po składnikach (jeśli podano)
+    if ingredients:
+        query = query.filter(
+            db.and_(*(Recipe.ingredients.like(f'%{ingredient}%') for ingredient in ingredients))
+        )
+
     # Sortowanie wyników
     if order == 'desc':
         query = query.order_by(getattr(Recipe, sort_by).desc())
     else:
         query = query.order_by(getattr(Recipe, sort_by).asc())
-    
+
     # Pobieranie przepisów z bazy danych
     recipes = query.all()
     json_recipes = list(map(lambda x: x.to_json(), recipes))  # Konwersja wyników do JSON-a
-    
+
+    # Tworzenie odpowiedzi
     response = app.response_class(
         response=json.dumps({'recipes': json_recipes}, ensure_ascii=False),
         mimetype='application/json; charset=utf-8'
     )
     return response
+
 
 
 #dodawanie do ulubionych czyli edytowanie kolumny favourite
