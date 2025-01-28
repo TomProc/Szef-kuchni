@@ -6,7 +6,7 @@ const BASE_URL = "http://127.0.0.1:5000"; // Adres Twojego backendu
 export const getRecipes = async (filters = {}) => {
     try {
         const params = {
-            sort_by: filters.sortBy || "id",
+            sort_by: filters.sortBy || "name",
             order: filters.order || "asc",
             time_max: filters.timeMax,
             difficulty: filters.difficulty,

@@ -53,6 +53,7 @@ const RecipeForm = ({ onRecipeAdded }) => {
         <option value="1">Easy</option>
         <option value="2">Medium</option>
         <option value="3">Hard</option>
+        <option value="4">Very hard</option>
       </select>
       <button className="bg-blue-500 text-white p-2 rounded">Add Recipe</button>
     </form>

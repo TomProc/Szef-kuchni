@@ -14,7 +14,7 @@ const RecipeList = ({ recipes, fetchRecipes, setSelectedRecipe }) => {
           </h2>
           <p>Ingredients: {recipe.ingredients}</p>
           <p>Time: {recipe.time} minutes</p>
-          <p>Difficulty: {["Easy", "Medium", "Hard"][recipe.difficulty - 1]}</p>
+          <p>Difficulty: {["Easy", "Medium", "Hard","Very hard"][recipe.difficulty - 1]}</p>
           <FavouriteToggle
             id={recipe.id}
             favourite={recipe.favourite}

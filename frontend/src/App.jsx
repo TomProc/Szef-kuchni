@@ -22,9 +22,13 @@ const Menu = ({ onNavigate }) => {
   );
 };
 
+
+
+
 // Komponent Przepisy
 const Recipes = ({
     filters,
+    handleResetFilters,
     setFilters,
     recipes,
     handleFilterChange,
@@ -70,9 +74,11 @@ const Recipes = ({
                         onChange={handleFilterChange}
                     >
                         <option value="">Wszystkie</option>
-                        <option value="1">Łatwe</option>
-                        <option value="2">Średnie</option>
-                        <option value="3">Trudne</option>
+                        <option value="1">Bardzo łatwe</option>
+                        <option value="2">Łatwe</option>
+                        <option value="3">Średnie</option>
+                        <option value="4">Trudne</option>
+                        <option value="5">Bardzo trudne</option>
                     </select>
                 </label>
                 <label>
@@ -94,7 +100,7 @@ const Recipes = ({
                         value={filters.sortBy}
                         onChange={handleFilterChange}
                     >
-                        <option value="id">ID</option>
+                        <option value="name">Nazwa</option>
                         <option value="time">Czas przygotowania</option>
                         <option value="difficulty">Poziom trudności</option>
                     </select>
@@ -110,6 +116,11 @@ const Recipes = ({
                         <option value="desc">Malejąco</option>
                     </select>
                 </label>
+                {/* Dodanie przycisku resetu */}
+                <button onClick={handleResetFilters} className="reset-button">
+                        Resetuj filtry
+                    </button>
+
             </div>
 
             {/* Lista przepisów */}
@@ -162,7 +173,7 @@ const App = () => {
         timeMax: null,
         difficulty: null,
         favourite: null,
-        sortBy: "id",
+        sortBy: "name",
         order: "asc",
         search: "",
     });
@@ -195,6 +206,17 @@ const App = () => {
         getRecipes(filters).then(setRecipes);
     };
 
+    const handleResetFilters = () => {
+        setFilters({
+            timeMax: null,
+            difficulty: null,
+            favourite: null,
+            sortBy: "name",
+            order: "asc",
+            search: "",
+        });
+    };
+
     const handleRecipeClick = (recipe) => {
         setSelectedRecipe(recipe);
     };
@@ -206,6 +228,12 @@ const App = () => {
     const handleNavigate = (view) => {
         setCurrentView(view);
     };
+
+    const handleSubmitIngredients = (ingredients) => {
+        setAvailableIngredients(ingredients);
+        setCurrentView("recipes");
+    };
+
 
     return (
         <div>
@@ -222,6 +250,7 @@ const App = () => {
                     selectedRecipe={selectedRecipe}
                     handleCloseDetails={handleCloseDetails}
                     handleNavigate={handleNavigate}
+                    handleResetFilters={handleResetFilters}
                 />
             )}
             {currentView === "ingredients" && (
