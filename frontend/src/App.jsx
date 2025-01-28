@@ -48,6 +48,18 @@ const Recipes = ({
   handleRecipeClick,
   handleNavigate
 }) => {
+  // Funkcja resetu filtrów
+  const handleResetFilters = () => {
+    setFilters({
+      timeMax: null,
+      difficulty: null,
+      favourite: null,
+      sortBy: "name",
+      order: "asc",
+      search: "",
+    });
+  };
+
   return (
     <div className="recipes-container">
       <button onClick={() => handleNavigate("menu")} className="back-button">Menu</button>
@@ -79,9 +91,12 @@ const Recipes = ({
           Poziom trudności:
           <select name="difficulty" value={filters.difficulty || ""} onChange={handleFilterChange}>
             <option value="">Wszystkie</option>
-            <option value="1">Łatwe</option>
-            <option value="2">Średnie</option>
-            <option value="3">Trudne</option>
+            <option value="1">Bardzo Łatwe</option>
+            <option value="2">Łatwe</option>
+            <option value="3">Średnie</option>
+            <option value="4">Trudne</option>
+            <option value="5">Bardzo trudne</option>
+
           </select>
         </label>
         <label>
@@ -89,13 +104,13 @@ const Recipes = ({
           <select name="favourite" value={filters.favourite || ""} onChange={handleFilterChange}>
             <option value="">Wszystkie</option>
             <option value="true">Tylko ulubione</option>
-            <option value="false">Bez ulubionych</option>
+           { /*<option value="false">Bez ulubionych</option>*/}
           </select>
         </label>
         <label>
           Sortuj według:
           <select name="sortBy" value={filters.sortBy} onChange={handleFilterChange}>
-            <option value="id">ID</option>
+            <option value="name">Nazwa</option>
             <option value="time">Czas przygotowania</option>
             <option value="difficulty">Poziom trudności</option>
           </select>
@@ -107,6 +122,11 @@ const Recipes = ({
             <option value="desc">Malejąco</option>
           </select>
         </label>
+
+        {/* Dodany przycisk resetu */}
+        <button onClick={handleResetFilters} className="reset-button">
+          Resetuj filtry
+        </button>
       </div>
 
       {/* Lista przepisów */}
@@ -139,7 +159,7 @@ const App = () => {
     timeMax: null,
     difficulty: null,
     favourite: null,
-    sortBy: "id",
+    sortBy: "name",
     order: "asc",
     search: "",
   });
