@@ -1,56 +1,71 @@
-// src/components/Ingredients.jsx
-// Komponent wyświetlający formularz do wprowadzania składników
+// Ingredients.jsx
 import React, { useState } from "react";
 
-// Komponent do wprowadzania składników przez użytkownika i filtrowania przepisów
 const Ingredients = ({ recipes, handleNavigate }) => {
-  const [ingredients, setIngredients] = useState("");
-  const [matchingRecipes, setMatchingRecipes] = useState([]);
+  const [userIngredients, setUserIngredients] = useState("");
+  const [filteredRecipes, setFilteredRecipes] = useState([]);
 
-  const handleInputChange = (e) => {
-    setIngredients(e.target.value);
+  // Funkcja obsługująca zmianę wprowadzenia składników przez użytkownika
+  const handleIngredientsChange = (e) => {
+    setUserIngredients(e.target.value);
   };
 
-  const handleFindRecipes = () => {
-    const userIngredients = ingredients
-      .split(",")
-      .map((ingredient) => ingredient.trim().toLowerCase());
+  // Funkcja wyszukiwania przepisów na podstawie dostępnych składników
+  const handleSearchRecipes = () => {
+    // Podziel składniki użytkownika na tablicę
+    const ingredientsList = userIngredients
+      .split(",") // Zakładamy, że składniki oddzielane są przecinkami
+      .map((ingredient) => ingredient.trim().toLowerCase().split(" ")[0]); // Zignoruj ilość i jednostki, bierzemy tylko nazwę składnika
 
-    const filteredRecipes = recipes.filter((recipe) =>
-      recipe.ingredients
-        .split(",")
-        .map((ingredient) => ingredient.trim().toLowerCase())
-        .some((ingredient) => userIngredients.includes(ingredient))
-    );
+    // Przefiltruj i posortuj przepisy na podstawie liczby dopasowań składników
+    const matchingRecipes = recipes
+      .map((recipe) => {
+        const recipeIngredients = recipe.ingredients
+          .split(";") // Dzielimy składniki przepisu po średniku
+          .map((ingredient) => ingredient.trim().toLowerCase().split(" ")[0]); // Bierzemy tylko pierwszy wyraz z każdego składnika
 
-    setMatchingRecipes(filteredRecipes);
+        // Liczymy liczbę dopasowań składników
+        const matchCount = ingredientsList.reduce((count, ingredient) => {
+          return recipeIngredients.includes(ingredient) ? count + 1 : count;
+        }, 0);
+
+        return { ...recipe, matchCount }; // Dodajemy liczbę dopasowań do każdego przepisu
+      })
+      .filter((recipe) => recipe.matchCount > 0) // Uwzględniamy tylko przepisy z przynajmniej jednym dopasowaniem
+      .sort((a, b) => b.matchCount - a.matchCount); // Sortujemy malejąco według liczby dopasowań
+
+    // Zapisujemy przefiltrowane i posortowane przepisy
+    setFilteredRecipes(matchingRecipes);
   };
 
   return (
     <div>
-      <button onClick={() => handleNavigate("menu")} className="back-button">Menu</button>
       <h1>Podaj dostępne składniki</h1>
       <input
         type="text"
-        value={ingredients}
-        onChange={handleInputChange}
-        placeholder="Wpisz składniki (np. chleb, ser, szynka)"
+        value={userIngredients}
+        onChange={handleIngredientsChange}
+        placeholder="Wpisz składniki (np. chleb, ser, masło)"
       />
-      <button onClick={handleFindRecipes}>Znajdź przepisy</button>
+      <button onClick={handleSearchRecipes}>Szukaj przepisów</button>
 
-      <h2>Pasujące przepisy:</h2>
-      <ul>
-        {matchingRecipes.length > 0 ? (
-          matchingRecipes.map((recipe) => (
-            <li key={recipe.id}>
-              <h3>{recipe.name}</h3>
-              <p>{recipe.ingredients}</p>
-            </li>
-          ))
+      {/* Wyświetlanie przepisów, które pasują do składników */}
+      <div>
+        {filteredRecipes.length > 0 ? (
+          <ul>
+            {filteredRecipes.map((recipe) => (
+              <li key={recipe.id}>
+                <h2>{recipe.name}</h2>
+                <p>{recipe.ingredients}</p>
+              </li>
+            ))}
+          </ul>
         ) : (
           <p>Brak przepisów pasujących do tych składników.</p>
         )}
-      </ul>
+      </div>
+
+      <button onClick={() => handleNavigate("menu")}>Powrót do menu</button>
     </div>
   );
 };

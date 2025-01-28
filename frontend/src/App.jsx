@@ -1,10 +1,11 @@
+// App.jsx
 import React, { useState, useEffect } from "react";
 import { getRecipes, toggleFavourite } from "./services/recipes";
-import Menu from "./components/Menu";
-import Recipes from "./components/Recipes";
-import RecipeDetails from "./components/RecipeDetails";
-import Ingredients from "./components/Ingredients";
 import "./App.css";
+import Ingredients from "./components/Ingredients";
+import Recipes from "./components/Recipes";
+import Menu from "./components/Menu";
+import RecipeDetails from "./components/RecipeDetails";
 
 const App = () => {
   const [recipes, setRecipes] = useState([]);
@@ -21,7 +22,7 @@ const App = () => {
 
   useEffect(() => {
     if (currentView === "recipes") {
-      getRecipes(filters).then(setRecipes); // Pobieramy przepisy z filtrami
+      getRecipes(filters).then(setRecipes);
     }
   }, [filters, currentView]);
 
@@ -55,15 +56,12 @@ const App = () => {
   };
 
   const handleNavigate = (view) => {
-    setCurrentView(view); // Zmieniamy widok w zależności od wyboru
+    setCurrentView(view);
   };
 
   return (
     <div>
-      {/* Widok Menu */}
       {currentView === "menu" && <Menu onNavigate={handleNavigate} />}
-
-      {/* Widok Przepisy */}
       {currentView === "recipes" && (
         <Recipes
           filters={filters}
@@ -76,13 +74,14 @@ const App = () => {
           handleNavigate={handleNavigate}
         />
       )}
-
-      {/* Szczegóły przepisu */}
-      {selectedRecipe && <RecipeDetails recipe={selectedRecipe} handleClose={handleCloseDetails} />}
-
-      {/* Widok Podaj dostępne składniki */}
+      {selectedRecipe && (
+        <RecipeDetails recipe={selectedRecipe} handleClose={handleCloseDetails} />
+      )}
       {currentView === "ingredients" && (
-        <Ingredients recipes={recipes} handleNavigate={handleNavigate} />
+        <Ingredients
+          recipes={recipes}
+          handleNavigate={handleNavigate}
+        />
       )}
     </div>
   );
