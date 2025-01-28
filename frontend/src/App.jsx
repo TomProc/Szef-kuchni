@@ -1,11 +1,10 @@
-// App.jsx
 import React, { useState, useEffect } from "react";
 import { getRecipes, toggleFavourite } from "./services/recipes";
-import "./App.css";
-import Ingredients from "./components/Ingredients";
-import Recipes from "./components/Recipes";
 import Menu from "./components/Menu";
+import Recipes from "./components/Recipes";
 import RecipeDetails from "./components/RecipeDetails";
+import Ingredients from "./components/Ingredients"; // Używamy poprawnej nazwy komponentu
+import "./App.css";
 
 const App = () => {
   const [recipes, setRecipes] = useState([]);
@@ -20,9 +19,14 @@ const App = () => {
   });
   const [currentView, setCurrentView] = useState("menu");
 
+  // Funkcja pobierania przepisów
+  const fetchRecipes = () => {
+    getRecipes(filters).then(setRecipes);
+  };
+
   useEffect(() => {
     if (currentView === "recipes") {
-      getRecipes(filters).then(setRecipes);
+      fetchRecipes(); // Pobieramy przepisy tylko w widoku "recipes"
     }
   }, [filters, currentView]);
 
@@ -44,11 +48,11 @@ const App = () => {
   const handleToggleFavourite = async (id, currentFavourite) => {
     const newFavouriteStatus = !currentFavourite;
     await toggleFavourite(id, newFavouriteStatus);
-    getRecipes(filters).then(setRecipes);
+    fetchRecipes(); // Pobieramy przepisy po zmianie statusu
   };
 
   const handleRecipeClick = (recipe) => {
-    setSelectedRecipe(recipe);
+    setSelectedRecipe(recipe); // Wyświetlenie szczegółów przepisu
   };
 
   const handleCloseDetails = () => {
@@ -57,6 +61,10 @@ const App = () => {
 
   const handleNavigate = (view) => {
     setCurrentView(view);
+    if (view === "ingredients") {
+      // Jeśli wchodzimy na Ingredients, to pobieramy przepisy tylko raz
+      fetchRecipes();
+    }
   };
 
   return (
@@ -74,13 +82,13 @@ const App = () => {
           handleNavigate={handleNavigate}
         />
       )}
-      {selectedRecipe && (
-        <RecipeDetails recipe={selectedRecipe} handleClose={handleCloseDetails} />
-      )}
+      {selectedRecipe && <RecipeDetails recipe={selectedRecipe} handleClose={handleCloseDetails} />}
       {currentView === "ingredients" && (
         <Ingredients
-          recipes={recipes}
           handleNavigate={handleNavigate}
+          recipes={recipes}
+          handleRecipeClick={handleRecipeClick}
+          fetchRecipes={fetchRecipes} // Przekazujemy fetchRecipes do Ingredients
         />
       )}
     </div>

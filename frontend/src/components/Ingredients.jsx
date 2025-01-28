@@ -1,71 +1,69 @@
-// Ingredients.jsx
 import React, { useState } from "react";
 
-const Ingredients = ({ recipes, handleNavigate }) => {
-  const [userIngredients, setUserIngredients] = useState("");
-  const [filteredRecipes, setFilteredRecipes] = useState([]);
+const Ingredients = ({ handleNavigate, recipes, handleRecipeClick, fetchRecipes }) => {
+  const [ingredients, setIngredients] = useState(""); // Pole do wpisania składników przez użytkownika
+  const [filteredRecipes, setFilteredRecipes] = useState([]); // Przepisy, które można zrobić
 
-  // Funkcja obsługująca zmianę wprowadzenia składników przez użytkownika
-  const handleIngredientsChange = (e) => {
-    setUserIngredients(e.target.value);
-  };
-
-  // Funkcja wyszukiwania przepisów na podstawie dostępnych składników
+  // Funkcja do wyszukiwania przepisów
   const handleSearchRecipes = () => {
-    // Podziel składniki użytkownika na tablicę
-    const ingredientsList = userIngredients
-      .split(",") // Zakładamy, że składniki oddzielane są przecinkami
-      .map((ingredient) => ingredient.trim().toLowerCase().split(" ")[0]); // Zignoruj ilość i jednostki, bierzemy tylko nazwę składnika
+    // Podziel składniki użytkownika i weź tylko pierwsze słowo każdego składnika
+    const userIngredients = ingredients
+      .split(",")
+      .map((ingredient) => ingredient.trim().toLowerCase().split(" ")[0]); // Bierzemy tylko pierwsze słowo
 
-    // Przefiltruj i posortuj przepisy na podstawie liczby dopasowań składników
     const matchingRecipes = recipes
       .map((recipe) => {
+        // Podziel składniki przepisu i weź tylko pierwsze słowo każdego składnika
         const recipeIngredients = recipe.ingredients
-          .split(";") // Dzielimy składniki przepisu po średniku
-          .map((ingredient) => ingredient.trim().toLowerCase().split(" ")[0]); // Bierzemy tylko pierwszy wyraz z każdego składnika
+          .split(";")
+          .map((item) => item.trim().toLowerCase().split(" ")[0]);
 
-        // Liczymy liczbę dopasowań składników
-        const matchCount = ingredientsList.reduce((count, ingredient) => {
-          return recipeIngredients.includes(ingredient) ? count + 1 : count;
-        }, 0);
+        // Liczba dopasowań składników
+        const matchCount = userIngredients.filter((ingredient) =>
+          recipeIngredients.includes(ingredient)
+        ).length;
 
-        return { ...recipe, matchCount }; // Dodajemy liczbę dopasowań do każdego przepisu
+        return { ...recipe, matchCount };
       })
-      .filter((recipe) => recipe.matchCount > 0) // Uwzględniamy tylko przepisy z przynajmniej jednym dopasowaniem
-      .sort((a, b) => b.matchCount - a.matchCount); // Sortujemy malejąco według liczby dopasowań
+      .filter((recipe) => recipe.matchCount > 0) // Filtrujemy tylko te przepisy, które mają dopasowania
+      .sort((a, b) => b.matchCount - a.matchCount); // Sortujemy przepisy po liczbie dopasowań
 
-    // Zapisujemy przefiltrowane i posortowane przepisy
-    setFilteredRecipes(matchingRecipes);
+    setFilteredRecipes(matchingRecipes); // Aktualizujemy listę przepisów
   };
 
   return (
-    <div>
-      <h1>Podaj dostępne składniki</h1>
+    <div className="ingredients-container">
+      <button className="back-button" onClick={() => handleNavigate("menu")}>
+        Wróć do menu
+      </button>
+      <h1>Znajdź przepisy na podstawie składników</h1>
+      <p>Wpisz składniki, oddzielając je przecinkami (np. "ryż, sól, woda"):</p>
       <input
         type="text"
-        value={userIngredients}
-        onChange={handleIngredientsChange}
-        placeholder="Wpisz składniki (np. chleb, ser, masło)"
+        value={ingredients}
+        onChange={(e) => setIngredients(e.target.value)}
+        placeholder="Wpisz składniki"
       />
-      <button onClick={handleSearchRecipes}>Szukaj przepisów</button>
+      <button onClick={() => { fetchRecipes(); handleSearchRecipes(); }} className="search-button">
+        Szukaj przepisów
+      </button>
 
-      {/* Wyświetlanie przepisów, które pasują do składników */}
-      <div>
-        {filteredRecipes.length > 0 ? (
-          <ul>
-            {filteredRecipes.map((recipe) => (
-              <li key={recipe.id}>
-                <h2>{recipe.name}</h2>
-                <p>{recipe.ingredients}</p>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p>Brak przepisów pasujących do tych składników.</p>
-        )}
-      </div>
+      <ul className="recipe-list">
+        {filteredRecipes.map((recipe) => (
+          <li key={recipe.id} className="recipe-card">
+            <h2 onClick={() => handleRecipeClick(recipe)} className="recipe-title">
+              {recipe.name}
+            </h2>
+            <p>Czas przygotowania: {recipe.time} minut</p>
+            <p>Poziom trudności: {recipe.difficulty}</p>
+            <p>Liczba dopasowanych składników: {recipe.matchCount}</p>
+          </li>
+        ))}
+      </ul>
 
-      <button onClick={() => handleNavigate("menu")}>Powrót do menu</button>
+      {filteredRecipes.length === 0 && (
+        <p>Nie znaleziono przepisów na podstawie podanych składników.</p>
+      )}
     </div>
   );
 };
