@@ -10,11 +10,29 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 import io
 import json
-import os
+import threading
+import gesture_recognition
+
 pdfmetrics.registerFont(TTFont('AbhayaLibre-Regular', 'AbhayaLibre-Regular.ttf'))
 pdfmetrics.registerFont(TTFont('AbhayaLibre-Bold', 'AbhayaLibre-Bold.ttf'))
 
 #  przykładowe wywołanie http://127.0.0.1:5000/get_recipes?sort_by=time&order=desc
+
+@app.route('/start_gesture_recognition', methods=['POST'])
+def start_gesture_recognition_route():
+    # Start gesture recognition in a separate thread to avoid blocking Flask
+    thread = threading.Thread(target=gesture_recognition.start_gesture_recognition)
+    thread.start()
+
+    return jsonify({"message": "Gesture recognition started"}), 200
+
+@app.route('/get_gesture', methods=['GET'])
+def get_gesture():
+    direction = gesture_recognition.get_gesture_direction()
+    return jsonify({"direction": direction}), 200
+
+
+
 
 @app.route('/get_recipes', methods=['GET'])
 def get_recipes():
