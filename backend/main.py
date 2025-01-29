@@ -1,22 +1,18 @@
 # -*- coding: utf-8 -*-
-# filepath: /c:/Users/tomek/source/repos/Szef-kuchni/app.py
+# filepath: /c:/Users/tomek/source/repos/Szef-kuchni/main.py
 
-from flask import Flask, request, jsonify, Response, render_template
+from flask import Flask, request, jsonify, Response, render_template, send_file
 from config import app, db
 from models import Recipe
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+import io
 import json
-
-# @app.route('/get_recipes', methods=['GET']) #decorator    
-# def get_recipes():
-#     recipes = Recipe.query.all()
-#     json_recipies = list(map(lambda x: x.to_json(), recipes)) #new list with json objects
-#     return jsonify({'recipies': json_recipies})
-
-# -*- coding: utf-8 -*-
-
-
-
-
+import os
+pdfmetrics.registerFont(TTFont('AbhayaLibre-Regular', 'AbhayaLibre-Regular.ttf'))
+pdfmetrics.registerFont(TTFont('AbhayaLibre-Bold', 'AbhayaLibre-Bold.ttf'))
 
 #  przykładowe wywołanie http://127.0.0.1:5000/get_recipes?sort_by=time&order=desc
 
@@ -106,9 +102,56 @@ def search_recipes():
     return jsonify({'recipes': json_recipes})
 
 
+@app.route('/export_recipe/<int:id_recipe>', methods=['GET'])
+def export_recipe(id_recipe):
+    recipe = Recipe.query.get(id_recipe)
+
+    if not recipe:
+        return jsonify({'error': 'Recipe not found'}), 404
+
+    # Tworzymy plik PDF w pamięci
+    buffer = io.BytesIO()
+    pdf = canvas.Canvas(buffer, pagesize=letter)
+    pdf.setTitle(f"Przepis - {recipe.name}")
+
+    # Ustawienia wyglądu dokumentu
+    pdf.setFont("AbhayaLibre-Bold", 16)
+    pdf.drawString(100, 750, f"Przepis: {recipe.name}")
+
+    pdf.setFont("AbhayaLibre-Regular", 12)
+    pdf.drawString(100, 720, f"Czas przygotowania: {recipe.time} minut")
+    pdf.drawString(100, 700, f"Poziom trudności: {recipe.difficulty}")
+    pdf.drawString(100, 680, f"Ulubione: {'Tak' if recipe.favourite else 'Nie'}")
+
+    pdf.setFont("AbhayaLibre-Bold", 14)
+    pdf.drawString(100, 650, "Składniki:")
+    
+    pdf.setFont("AbhayaLibre-Regular", 12)
+    ingredients_list = recipe.ingredients.split(", ")
+    y_position = 630
+    for ingredient in ingredients_list:
+        pdf.drawString(120, y_position, f"- {ingredient}")
+        y_position -= 20
+
+    pdf.setFont("AbhayaLibre-Bold", 14)
+    pdf.drawString(100, y_position - 20, "Sposób przygotowania:")
+    
+    pdf.setFont("AbhayaLibre-Regular", 12)
+    preparation_steps = recipe.preparation.split(". ")
+    y_position -= 40
+    for step in preparation_steps:
+        pdf.drawString(120, y_position, f"• {step}")
+        y_position -= 20
+
+    pdf.showPage()
+    pdf.save()
+
+    buffer.seek(0)
+
+    # Zwracamy plik PDF jako odpowiedź
+    return send_file(buffer, as_attachment=True, download_name=f"{recipe.name}.pdf", mimetype='application/pdf')
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
-
     app.run(debug=True)
