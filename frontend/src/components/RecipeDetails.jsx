@@ -6,7 +6,7 @@ const RecipeDetails = ({ recipe, handleClose }) => {
 
   if (!recipe) return null;
 
-  const steps = recipe.preparation.split(",");
+  const steps = recipe.preparation.split(";");
 
   // Funkcja do eksportu PDF
   const handleExportPDF = async (recipeId) => {
